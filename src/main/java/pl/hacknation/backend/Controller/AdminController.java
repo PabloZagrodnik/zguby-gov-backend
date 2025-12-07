@@ -12,19 +12,24 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*", allowCredentials = "true")
 public class AdminController {
 
     private final AdminService adminService;
 
-    // Odbieranie JSON wstępnie wypełniony przez AI
+    // To obsługuje przycisk "Analizuj zdjęcia" na frontendzie
     @PostMapping("/analyze")
-    public ResponseEntity<FoundItem> analyzeItem(@RequestParam("file") MultipartFile file) throws IOException {
-        FoundItem analyzedItem = adminService.analyzeImage(file);
-        return ResponseEntity.ok(analyzedItem);
+    public ResponseEntity<FoundItem> analyzeItem(@RequestParam("file") MultipartFile file) {
+        try {
+            FoundItem analyzedItem = adminService.analyzeImage(file);
+            return ResponseEntity.ok(analyzedItem);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
-    // Wysyłanie JSON (poprawiony przez urzędnika + lokalizacja) -> Zapisz w bazie
+    // To obsługuje przycisk "Zapisz do bazy"
     @PostMapping("/save")
     public ResponseEntity<FoundItem> saveItem(@RequestBody FoundItem item) {
         FoundItem savedItem = adminService.saveItem(item);

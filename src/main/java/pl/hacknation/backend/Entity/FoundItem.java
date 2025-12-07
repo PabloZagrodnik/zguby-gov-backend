@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -29,11 +30,11 @@ public class FoundItem {
     @Enumerated(EnumType.STRING)
     private ItemCategory category;
 
-    private LocalDateTime eventDate;
-    private LocalDateTime receivedDate;
+    private LocalDate eventDate;
+    private LocalDate receivedDate;
 
-    private String location; // Miejsce znalezienia
-    private LocalDateTime publishedDate;
+    private String location;
+    private LocalDate publishedDate;
 
     @Column(length = 2000)
     private String notes;
@@ -49,8 +50,6 @@ public class FoundItem {
     @Column(nullable = false)
     private ItemStatus status;
 
-
-    // Pola audytowe
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

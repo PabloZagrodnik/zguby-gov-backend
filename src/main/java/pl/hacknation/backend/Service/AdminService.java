@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,8 +31,6 @@ public class AdminService {
     private final ChatModel chatModel;
     private final FoundItemRepository repository;
     private final ObjectMapper objectMapper;
-
-    // Folder do zapisu zdjęć
     private final Path uploadDir = Paths.get("uploads");
 
     public FoundItem analyzeImage(MultipartFile file) throws IOException {
@@ -59,13 +57,9 @@ public class AdminService {
         String aiResponse = chatModel.call(new Prompt(userMessage)).getResult().getOutput().getText();
         String cleanJson = aiResponse.replace("```json", "").replace("```", "").trim();
 
-        // Mapowanie odpowiedzi AI do tymczasowego DTO
         AiAnalysisResponse aiData = objectMapper.readValue(cleanJson, AiAnalysisResponse.class);
-
-        // Zapis pliku fizycznie i generowanie URL
         String imageUrl = saveFileAndGetUrl(file);
 
-        // Budowanie encji FoundItem
         FoundItem item = new FoundItem();
         item.setRegistryNumber("REG-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         item.setTitle(aiData.title());
@@ -76,46 +70,35 @@ public class AdminService {
         item.setImageUrl(imageUrl);
         item.setStatus(ItemStatus.AVAILABLE);
 
+        item.setEventDate(LocalDate.now());
+        item.setReceivedDate(LocalDate.now());
 
         return item;
     }
 
     public FoundItem saveItem(FoundItem item) {
-        if (item.getEventDate() == null) {
-            item.setEventDate(LocalDateTime.now());
-        }
-        if (item.getLocation() == null || item.getLocation().isEmpty()) {
-            item.setLocation("Biuro Główne");
-        }
-        // Upewniamy się, że status jest ustawiony
-        if (item.getStatus() == null) {
-            item.setStatus(ItemStatus.AVAILABLE);
+        if (item.getEventDate() == null) item.setEventDate(LocalDate.now());
+        if (item.getReceivedDate() == null) item.setReceivedDate(LocalDate.now());
+        if (item.getLocation() == null || item.getLocation().isEmpty()) item.setLocation("Biuro Główne");
+        if (item.getStatus() == null) item.setStatus(ItemStatus.AVAILABLE);
+
+        if (item.getRegistryNumber() == null || item.getRegistryNumber().isEmpty()) {
+            item.setRegistryNumber("REG-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         }
 
         return repository.save(item);
     }
 
     private String saveFileAndGetUrl(MultipartFile file) throws IOException {
-        if (!Files.exists(uploadDir)) {
-            Files.createDirectories(uploadDir);
-        }
-
+        if (!Files.exists(uploadDir)) Files.createDirectories(uploadDir);
         String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
         Path targetLocation = uploadDir.resolve(filename);
         Files.copy(file.getInputStream(), targetLocation);
-
-
-        return "/uploads/" + filename;
+        return "http://localhost:8080/uploads/" + filename;
     }
 
-    // Rekord do parsowania
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record AiAnalysisResponse(
-            String title,
-            ItemCategory category,
-            String description,
-            String color,
-            String brand
-
+            String title, ItemCategory category, String description, String color, String brand
     ) {}
 }
