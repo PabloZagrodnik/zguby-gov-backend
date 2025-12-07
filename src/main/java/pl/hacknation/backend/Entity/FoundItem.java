@@ -1,9 +1,11 @@
-package  pl.hacknation.backend.Entity;
+package pl.hacknation.backend.Entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -11,23 +13,48 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "found_items")
 public class FoundItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String category;
+    @Column(nullable = false, unique = true)
+    private String registryNumber;
 
-    @Column(length = 1000)
+    @Column(nullable = false)
+    private String title;
+
+    @Enumerated(EnumType.STRING)
+    private ItemCategory category;
+
+    private LocalDateTime eventDate;
+    private LocalDateTime receivedDate;
+
+    private String location; // Miejsce znalezienia
+    private LocalDateTime publishedDate;
+
+    @Column(length = 2000)
+    private String notes;
+
+    @Column(length = 2000)
     private String description;
 
     private String color;
-    private String location;
+    private String brand;
+    private String imageUrl;
 
-    private LocalDateTime dateFound;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ItemStatus status;
 
-    @Lob
-    @Column(columnDefinition = "BLOB")
-    private byte[] image;
+
+    // Pola audytowe
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }

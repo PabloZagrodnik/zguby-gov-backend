@@ -14,22 +14,34 @@ public class ToolsConfig {
 
     public record SearchRequest(String query) {}
 
-    public record ItemDto(String category, String description, String color, String location) {}
+    public record ItemDto(
+            String registryNumber,
+            String title,
+            String category,
+            String description,
+            String color,
+            String brand,
+            String location,
+            String eventDate
+    ) {}
 
     @Bean
     @Description("Przeszukuje bazę rzeczy znalezionych na podstawie opisu, koloru lub kategorii.")
     public Function<SearchRequest, List<ItemDto>> searchLostItems(FoundItemRepository repository) {
         return request -> {
-            System.out.println(">>> AI CALLING TOOL: Szukam frazy '" + request.query() + "'");
-
             List<FoundItem> items = repository.searchByQuery(request.query());
 
             return items.stream()
                     .map(item -> new ItemDto(
-                            item.getCategory(),
+                            item.getRegistryNumber(),
+                            item.getTitle(),
+                            item.getCategory() != null ? item.getCategory().name() : null,
                             item.getDescription(),
                             item.getColor(),
-                            item.getLocation()))
+                            item.getBrand(),
+                            item.getLocation(),
+                            item.getEventDate() != null ? item.getEventDate().toString() : null
+                    ))
                     .toList();
         };
     }
